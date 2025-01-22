@@ -1,80 +1,103 @@
 services:
-  rabbit:
-    image: rabbitmq:3.13-management
-    hostname: rabbitmq
+  db:
+    image: mysql
+    container_name: "mysql-ms"
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: rabbitmq-diagnostics check_port_connectivity
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
+      - "3306:3306"
     extends:
+      service: microservice-mysql-config
       file: common-config.yml
-      service: network-deploy-service
 
-  configserver:
-    image: "eazybytes/configserver:s6"
-    container_name: configserver-ms
+  configserverms:
+    image: "timsam31/configserver:v6"
+    container_name: configserver
     ports:
       - "8071:8071"
-    depends_on:
-      rabbit:
-        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    extends:
+      service: microservice-base-config
+      file: common-config.yml
+    environment:
+      SPRING_APPLICATION_NAME: "configserverms"
     healthcheck:
       test: "curl --fail --silent localhost:8071/actuator/health/readiness | grep UP || exit 1"
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  eurekaserver:
+    image: "timsam31/eureka:v6"
+    container_name: eureka-ms
+    ports:
+      - "8070:8070"
     extends:
+      service: microservice-eureka-config
       file: common-config.yml
-      service: microservice-base-config
+    environment:
+      SPRING_APPLICATION_NAME: "eurekaserver"
+    depends_on:
+      configserverms:
+        condition: service_healthy
 
   accounts:
-    image: "eazybytes/accounts:s6"
+    image: "timsam31/accounts:v6"
     container_name: accounts-ms
     ports:
       - "8080:8080"
+    extends:
+      service: microservice-config
+      file: common-config.yml
     depends_on:
-      configserver:
+      configserverms:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      eurekaserver:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "accounts"
-    extends:
-      file: common-config.yml
-      service: microservice-configserver-config
+
 
   loans:
-    image: "eazybytes/loans:s6"
+    image: "timsam31/loans:v6"
     container_name: loans-ms
     ports:
       - "8090:8090"
+    extends:
+      service: microservice-config
+      file: common-config.yml
     depends_on:
-      configserver:
+      configserverms:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      eurekaserver:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "loans"
-    extends:
-      file: common-config.yml
-      service: microservice-configserver-config
 
   cards:
-    image: "eazybytes/cards:s6"
+    image: "timsam31/cards:v6"
     container_name: cards-ms
     ports:
       - "9000:9000"
+    extends:
+      service: microservice-config
+      file: common-config.yml
     depends_on:
-      configserver:
+      configserverms:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      eurekaserver:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "cards"
-    extends:
-      file: common-config.yml
-      service: microservice-configserver-config
 
 networks:
-  eazybank:
+  timbank:
     driver: "bridge"

@@ -1,5 +1,6 @@
 package com.eazybytes.accounts.service;
 
+import com.eazybytes.accounts.dto.CustomerDetailsDto;
 import com.eazybytes.accounts.dto.CustomerDto;
 
 public interface IAccountsService {
@@ -30,6 +31,8 @@ public interface IAccountsService {
      * @return boolean indicating if the delete of Account details is successful or not
      */
     boolean deleteAccount(String mobileNumber);
+
+    CustomerDetailsDto fetchCustomerDetails(String mobileNumber);
 
 
 }

@@ -1,7 +1,7 @@
 services:
   network-deploy-service:
     networks:
-      - eazybank
+      - timbank
 
   microservice-base-config:
     extends:
@@ -10,12 +10,48 @@ services:
       resources:
         limits:
           memory: 700m
+
+
+  microservice-mysql-config:
+    extends:
+      service: microservice-base-config
     environment:
-      SPRING_RABBITMQ_HOST: "rabbit"
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: devdb
+      SPRING_APPLICATION_NAME: db
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "--silent" ]
+      interval: 10s
+      retries: 10
+      timeout: 10s
+      start_period: 10s
+
 
   microservice-configserver-config:
     extends:
       service: microservice-base-config
     environment:
       SPRING_PROFILES_ACTIVE: default
-      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      SPRING_CONFIG_IMPORT: "configserver:http://configserverms:8071/"
+    healthcheck:
+      test: "curl --fail --silent localhost:8070/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  microservice-eureka-config:
+    extends:
+      service: microservice-configserver-config
+    environment:
+      EUREKA_CLIENT_REGISTER-WITH-EUREKA: false
+      EUREKA_CLIENT_FETCH-REGISTRY: false
+
+  microservice-config:
+    extends:
+      service: microservice-configserver-config
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/devdb
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_USERNAME: root
