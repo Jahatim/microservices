@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: gatewayserver
+  #  config:
+  #    import: "optional:configserver:http://localhost:8071"
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+          lower-case-service-id: true
+      httpclient:
+        connect-timeout: 1000
+        response-timeout: 5s
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+
+  endpoint:
+    gateway:
+      access: unrestricted
+    prometheus:
+      access: unrestricted
+  info:
+    env:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+info:
+  app: "Tim Bank Gateway Server"
+  description: "gateway server to handle Tim Bank"
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state:
+          seconds: 10
+
+logging:
+  level:
+    com:
+      tim:
+        gatewayserver: INFO
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}] [%t] %d{yyyy-MM-dd HH:mm:ss.SSS}"

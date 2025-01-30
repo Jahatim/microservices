@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -38,7 +40,7 @@ import org.springframework.web.bind.annotation.*;
 public class CardsController {
 
     private ICardsService iCardsService;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(CardsController.class);
     public CardsController(ICardsService iCardsService) {
         this.iCardsService = iCardsService;
     }
@@ -71,9 +73,10 @@ public class CardsController {
     }
     )
     @PostMapping("/create")
-    public ResponseEntity<ResponseDto> createCard(@Valid @RequestParam
+    public ResponseEntity<ResponseDto> createCard(@RequestHeader(name = "timbank_traceid") String traceId,@Valid @RequestParam
                                                       @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile number must be 10 digits")
                                                       String mobileNumber) {
+        LOGGER.info("inside createcard with traceId:{} and mobileNumber:{}", traceId, mobileNumber );
         iCardsService.createCard(mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -98,9 +101,10 @@ public class CardsController {
             )
     })
     @GetMapping("/fetch")
-    public ResponseEntity<CardsDto> fetchCardDetails(@RequestParam
+    public ResponseEntity<CardsDto> fetchCardDetails(@RequestHeader(name = "timbank_traceid") String traceId,@RequestParam
                                                                @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile number must be 10 digits")
                                                                String mobileNumber) {
+        LOGGER.info("inside fetchcard with traceId:{} and mobileNumber:{}", traceId, mobileNumber );
         CardsDto cardsDto = iCardsService.fetchCard(mobileNumber);
         return ResponseEntity.status(HttpStatus.OK).body(cardsDto);
     }
@@ -127,7 +131,8 @@ public class CardsController {
             )
         })
     @PutMapping("/update")
-    public ResponseEntity<ResponseDto> updateCardDetails(@Valid @RequestBody CardsDto cardsDto) {
+    public ResponseEntity<ResponseDto> updateCardDetails(@RequestHeader(name = "timbank_traceid") String traceId,@Valid @RequestBody CardsDto cardsDto) {
+        LOGGER.info("inside updatecard with traceId:{} and cardsDto:{}", traceId, cardsDto );
         boolean isUpdated = iCardsService.updateCard(cardsDto);
         if(isUpdated) {
             return ResponseEntity
@@ -162,9 +167,10 @@ public class CardsController {
             )
     })
     @DeleteMapping("/delete")
-    public ResponseEntity<ResponseDto> deleteCardDetails(@RequestParam
+    public ResponseEntity<ResponseDto> deleteCardDetails(@RequestHeader(name = "timbank_traceid") String traceId,@RequestParam
                                                                 @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile number must be 10 digits")
                                                                 String mobileNumber) {
+        LOGGER.info("inside deletecard with traceId:{} and mobileNumber:{}", traceId, mobileNumber );
         boolean isDeleted = iCardsService.deleteCard(mobileNumber);
         if(isDeleted) {
             return ResponseEntity

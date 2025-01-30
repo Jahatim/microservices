@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: "cards"
+  #  config:
+  #    import: "optional:configserver:http://localhost:8071"
   profiles:
     active: "prod"
   datasource:
@@ -17,11 +19,16 @@ management:
     web:
       exposure:
         include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
   info:
     env:
       enabled: true
   endpoint:
     shutdown:
+      enabled: true
+    prometheus:
       enabled: true
 
 eureka:
@@ -39,3 +46,10 @@ info:
     name: "Tim Bank Cars MS"
     description: "Tim Bank cards micro-service"
     version: "1.0"
+logging:
+  level:
+    com:
+      eazybytes:
+        cards: INFO
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}] [%t] %d{yyyy-MM-dd HH:mm:ss.SSS}"

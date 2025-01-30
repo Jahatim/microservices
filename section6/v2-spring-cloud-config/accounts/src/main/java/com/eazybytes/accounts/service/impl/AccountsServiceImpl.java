@@ -14,6 +14,8 @@ import com.eazybytes.accounts.service.IAccountsService;
 import com.eazybytes.accounts.service.client.CardsFeignClient;
 import com.eazybytes.accounts.service.client.LoansFeignClient;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,8 @@ public class AccountsServiceImpl implements IAccountsService {
     private final CardsFeignClient cardsFeignClient;
     private AccountsRepository accountsRepository;
     private CustomerRepository customerRepository;
+
+    private static final Logger LOGGER= LoggerFactory.getLogger(AccountsServiceImpl.class);
 
     /**
      * @param customerDto - CustomerDto Object
@@ -117,8 +121,9 @@ public class AccountsServiceImpl implements IAccountsService {
     }
 
     @Override
-    public CustomerDetailsDto fetchCustomerDetails(String mobileNumber) {
+    public CustomerDetailsDto fetchCustomerDetails(String mobileNumber, String traceId) {
 
+        LOGGER.info("traceId in fetchCustomerDetails: {}", traceId);
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
         );
@@ -128,12 +133,15 @@ public class AccountsServiceImpl implements IAccountsService {
 
         CustomerDetailsDto customerDetailsDto = CustomerMapper.mapToCustomerDetailsDto(customer, new CustomerDetailsDto());
 
-        ResponseEntity<LoansDto> loansDtoResponseEntity = loansFeignClient.fetchLoanDetails(mobileNumber);
-        ResponseEntity<CardsDto> cardsDtoResponseEntity = cardsFeignClient.fetchCardDetails(mobileNumber);
+        ResponseEntity<LoansDto> loansDtoResponseEntity = loansFeignClient.fetchLoanDetails(traceId, mobileNumber);
+        ResponseEntity<CardsDto> cardsDtoResponseEntity = cardsFeignClient.fetchCardDetails(traceId,mobileNumber);
+
 
         customerDetailsDto.setAccountsDto(AccountsMapper.mapToAccountsDto(accounts, new AccountsDto()));
-        customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
-        customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());
+        if (null != loansDtoResponseEntity)
+            customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
+        if (null != cardsDtoResponseEntity)
+            customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());
 
         return customerDetailsDto;
     }

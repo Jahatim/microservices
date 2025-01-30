@@ -9,6 +9,8 @@ spring:
     url: jdbc:mysql://localhost:3306/devdb
     username: root
     password: root
+#  config:
+#    import: "optional:configserver:http://localhost:8071"
   sql:
     init:
       mode: always
@@ -20,9 +22,15 @@ management:
   info:
     env:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoint:
     shutdown:
       enabled: true
+    prometheus:
+      enabled: true
+
 eureka:
   instance:
     prefer-ip-address: true
@@ -38,3 +46,10 @@ info:
     description: "Tim Bank loans micro-service"
     version: 1.0
 
+logging:
+  level:
+    com:
+      eazybytes:
+        loans: INFO
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}] [%t] %d{yyyy-MM-dd HH:mm:ss.SSS}"

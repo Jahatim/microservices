@@ -32,7 +32,7 @@ public interface IAccountsService {
      */
     boolean deleteAccount(String mobileNumber);
 
-    CustomerDetailsDto fetchCustomerDetails(String mobileNumber);
+    CustomerDetailsDto fetchCustomerDetails(String mobileNumber, String traceId);
 
 
 }

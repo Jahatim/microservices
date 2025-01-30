@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: "accounts"
+  #  config:
+  #    import: "optional:configserver:http://localhost:8071"
   profiles:
     active: "prod"
   datasource:
@@ -12,6 +14,11 @@ spring:
   sql:
     init:
       mode: always
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
 
 management:
   endpoints:
@@ -21,10 +28,35 @@ management:
   endpoint:
     shutdown:
       enabled: true
+    prometheus:
+      enabled: true
   info:
     env:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
+
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        permitted-number-of-calls-in-half-open-state: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state:
+          seconds: 10
+  retry:
+    configs:
+      defaults:
+        max-attempts: 3
+        wait-duration: 500ms
+        enable-randomized-wait: true
+        enable-exponential-backoff: true
+        ignore-exceptions:
+          - java.lang.NullPointerException
 
 eureka:
   instance:
@@ -38,5 +70,12 @@ eureka:
 info:
   app:
     name: "Tim bank"
-    description : "Tim Bank Accounts micro-service"
+    description: "Tim Bank Accounts micro-service"
     version: "1.0"
+logging:
+  level:
+    com:
+      eazybytes:
+        accounts: INFO
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}] [%t] %d{yyyy-MM-dd HH:mm:ss.SSS}"

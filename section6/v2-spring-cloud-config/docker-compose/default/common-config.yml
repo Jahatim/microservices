@@ -10,6 +10,10 @@ services:
       resources:
         limits:
           memory: 700m
+    environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+      OTEL_METRICS_EXPORTER: none
 
 
   microservice-mysql-config:
@@ -55,3 +59,4 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/devdb
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_DATASOURCE_USERNAME: root
+
